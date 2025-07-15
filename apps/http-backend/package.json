@@ -1,0 +1,17 @@
+{
+  "name": "http-backend",
+  "version": "1.0.0",
+  "description": "",
+  "license": "ISC",
+  "author": "",
+  "type": "commonjs",
+  "main": "index.js",
+  "dependencies": {
+    "@repo/typescript-config": "workspace:*"
+  },
+  "scripts": {
+    "start": "node ./dist/index.ts",
+    "build": "tsc -b",
+    "dev": "npm run build  && npm run start"
+  }
+}
