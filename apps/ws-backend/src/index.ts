@@ -1,11 +1,23 @@
-import express, { Request, Response } from "express";
+import {WebSocketServer , WebSocket} from 'ws';
+import jwt, { JwtPayload } from "jsonwebtoken";
+import { JWT_SECRET } from './config.js';
+import { decode } from 'punycode';
+const wss = new WebSocketServer({port: 8080});
 
-const app = express();
-
-app.get('/', (req: Request, res: Response) => {
-    res.send("WebSocket backend is running");
-});
-
-app.listen(3001, () => {
-    console.log("WebSocket server is running on port 3001");
+wss.on('connection' , function connection(ws , request) {
+    const url = request.url;
+    if(!url){
+        return ;
+    }
+    //Splits url by ? into array 
+    const params = new URLSearchParams(url.split('?')[1]);
+    const token = params.get('token')|| "";    
+    const decoded = jwt.verify(token , JWT_SECRET)
+    if(!decoded || !(decoded as JwtPayload).userId){
+        ws.close(1008 , "Unauthorized");
+        return;
+    }
+    ws.on('message', function message(data) {
+        ws.send('hello ');
+    });
 });

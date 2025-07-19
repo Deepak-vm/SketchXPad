@@ -6,6 +6,10 @@ import { middleware } from "./middleware.js";
 const app = express();
 
 app.post('/signup', (req, res) => {
+    //db call
+    res.json({
+        UserId: "123"
+    });
     res.send("Signup successful");
 });
 
@@ -17,7 +21,10 @@ app.post('/signin', (req, res) => {
 });
 
 app.post('/room',middleware , (req, res) => {
-    res.send("Room created successfully");
+    //db call
+    res.json({
+        roomId: 123
+    });
 });
 
 app.listen(3000, () => {
