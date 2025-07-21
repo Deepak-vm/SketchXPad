@@ -1,6 +1,9 @@
 {
-  "name": "SketchXPad",
+  "name": "sketchxpad",
   "private": true,
+  "workspaces": [
+    "packages/*"
+  ],
   "scripts": {
     "build": "turbo run build",
     "dev": "turbo run dev",
