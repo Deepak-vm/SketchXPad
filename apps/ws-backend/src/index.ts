@@ -1,23 +1,40 @@
-import {WebSocketServer , WebSocket} from 'ws';
-import jwt, { JwtPayload } from "jsonwebtoken";
-import { JWT_SECRET } from './config.js';
-import { decode } from 'punycode';
-const wss = new WebSocketServer({port: 8080});
+import { WebSocketServer, WebSocket } from 'ws';
+import { IncomingMessage } from 'http';
+import * as jwt from "jsonwebtoken";
+import { JwtPayload } from "jsonwebtoken";
+import { JWT_SECRET } from '@repo/backend-common';
 
-wss.on('connection' , function connection(ws , request) {
+const wss = new WebSocketServer({ port: 8080 });
+
+interface CustomJwtPayload extends JwtPayload {
+    userId: number;
+}
+
+wss.on('connection', function connection(ws: WebSocket, request: IncomingMessage) {
     const url = request.url;
-    if(!url){
-        return ;
+    if (!url) {
+        return;
     }
     //Splits url by ? into array 
     const params = new URLSearchParams(url.split('?')[1]);
-    const token = params.get('token')|| "";    
-    const decoded = jwt.verify(token , JWT_SECRET)
-    if(!decoded || !(decoded as JwtPayload).userId){
-        ws.close(1008 , "Unauthorized");
+    const token = params.get('token') || "";
+
+    try {
+        const decoded = jwt.verify(token, JWT_SECRET) as CustomJwtPayload;
+        if (!decoded || !decoded.userId) {
+            ws.close(1008, "Unauthorized");
+            return;
+        }
+
+        ws.on('message', function message(data) {
+            console.log('Received:', data.toString());
+            ws.send('hello ' + decoded.userId);
+        });
+
+    } catch (error) {
+        ws.close(1008, "Unauthorized");
         return;
     }
-    ws.on('message', function message(data) {
-        ws.send('hello ');
-    });
 });
+
+console.log("WebSocket server is running on port 8080");
