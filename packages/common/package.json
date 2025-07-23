@@ -7,12 +7,23 @@
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "exports":{
-    "./types": "./src/types"
+    ".": {
+      "types": "./src/types.ts",
+      "default": "./src/types.ts"
+    },
+    "./types": {
+      "types": "./src/types.ts",
+      "default": "./src/types.ts"
+    },
+    "./src/types": {
+      "types": "./src/types.ts",
+      "default": "./src/types.ts"
+    }
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "type": "commonjs",
+  "type": "module",
   "dependencies": {
     "zod": "^4.0.5"
   },

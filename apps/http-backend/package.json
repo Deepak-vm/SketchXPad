@@ -4,6 +4,7 @@
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
+  "type": "module",
   "scripts": {
     "dev": "tsx src/index.ts",
     "build": "tsc",
@@ -23,6 +24,7 @@
     "tsx": "^4.19.2",
     "typescript": "^5.6.3",
     "@repo/backend-common": "workspace:*",
-    "@repo/common":"workspace:*"
+    "@repo/common":"workspace:*",
+    "@repo/db": "workspace:*"
   }
 }
