@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from "express";
-import * as jwt from "jsonwebtoken";
+import jwt from "jsonwebtoken";
 import { JwtPayload } from "jsonwebtoken";
 import { JWT_SECRET } from "@repo/backend-common";
 
@@ -7,17 +7,30 @@ import { JWT_SECRET } from "@repo/backend-common";
 declare global {
     namespace Express {
         interface Request {
-            userId?: number;
+            userId?: string;
         }
     }
 }
 
 interface CustomJwtPayload extends JwtPayload {
-    userId: number;
+    userId: string; 
 }
 
 export function middleware(req: Request, res: Response, next: NextFunction) {
-    const token = req.headers['authorization'] ?? "";
+    const authHeader = req.headers['authorization'];
+    let token = "";
+
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+        token = authHeader.substring(7); 
+    } else if (authHeader) {
+        token = authHeader; 
+    }
+
+    if (!token) {
+        return res.status(403).json({
+            message: "No token provided"
+        });
+    }
 
     try {
         const decoded = jwt.verify(token, JWT_SECRET) as CustomJwtPayload;
@@ -30,6 +43,7 @@ export function middleware(req: Request, res: Response, next: NextFunction) {
             });
         }
     } catch (error) {
+        console.log('Token verification error:', error);
         res.status(403).json({
             message: "Invalid token"
         });

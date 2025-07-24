@@ -9,6 +9,7 @@ const app = express();
 app.use(express.json());
 
 app.post('/signup', async (req: Request, res: Response) => {
+    console.log('Request body:', req.body);
     const parsedData = CreateUserSchema.safeParse(req.body);
     if (!parsedData.success) {
         return res.json({
@@ -19,7 +20,7 @@ app.post('/signup', async (req: Request, res: Response) => {
     try {
         const user = await prisma.user.create({
             data: {
-                email: parsedData.data.username!,
+                email: parsedData.data.email!,
                 password: parsedData.data.password!,
                 name: parsedData.data.name!,
                 photo: ""
@@ -47,7 +48,7 @@ app.post('/signin', async (req: Request, res: Response) => {
     try {
         const user = await prisma.user.findFirst({
             where: {
-                email: parsedData.data.username!,
+                email: parsedData.data.email!,
                 password: parsedData.data.password!,
             }
         })
@@ -76,7 +77,7 @@ app.post('/room', middleware, async (req: Request, res: Response) => {
         const room = await prisma.room.create({
             data: {
                 slug: parsedData.data.roomName,
-                adminId: req.userId!.toString()
+                adminId: req.userId! 
             }
         });
         res.json({
