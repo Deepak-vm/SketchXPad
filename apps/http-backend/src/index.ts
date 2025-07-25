@@ -2,8 +2,8 @@ import express, { Request, Response } from "express";
 import jwt from "jsonwebtoken";
 import { JWT_SECRET } from '@repo/backend-common';
 import { middleware } from "./middleware.js";
-import { CreateUserSchema, LoginUserSchema, CreateRoomSchema } from "@repo/common/types"; // Use the exported path
-import { prisma } from "@repo/db/client"; // Use the exported path
+import { CreateUserSchema, LoginUserSchema, CreateRoomSchema } from "@repo/common/types";
+import { prisma } from "@repo/db/client";
 
 const app = express();
 app.use(express.json());

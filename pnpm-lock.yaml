@@ -103,11 +103,14 @@ importers:
       '@repo/backend-common':
         specifier: workspace:*
         version: link:../../packages/backend-common
+      '@repo/db':
+        specifier: workspace:*
+        version: link:../../packages/db
       jsonwebtoken:
         specifier: ^9.0.2
         version: 9.0.2
       ws:
-        specifier: ^8.18.0
+        specifier: ^8.14.2
         version: 8.18.3
     devDependencies:
       '@types/jsonwebtoken':
@@ -117,7 +120,7 @@ importers:
         specifier: ^20.0.0
         version: 20.19.9
       '@types/ws':
-        specifier: ^8.5.12
+        specifier: ^8.5.7
         version: 8.18.1
       tsx:
         specifier: ^4.19.2
