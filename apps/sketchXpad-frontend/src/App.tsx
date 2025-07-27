@@ -1,15 +1,8 @@
 
+import { AuthPage } from "./pages/authPage.tsx";
 
 function App() {
- 
-
-  return (
-    <div className="bg-red-500">
-      hello
-    </div>
-  )
+  return <AuthPage />;
 }
 
-
-export default App
-
+export default App;
