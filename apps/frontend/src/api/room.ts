@@ -1,10 +1,20 @@
 
-import axios  from './axios';
+import axios from './axios';
 
 
-// Join room
-export const joinRoom = async (roomId: string, userId: string): Promise<void> => {
-    axios.get(`/room/${roomId}/join`, { params: { userId } });
+// Get room
+const getRoomID = async (slug: string) => {
+    const response = await axios.get(`/room/${slug}/`);
+    return response.data.id;
 };
 
+// Join room
+const joinRoom = async (slug: string) => {
+    const roomId = await getRoomID(slug);
+    return roomId;
+}
+
 // Create room
+
+
+export { joinRoom}

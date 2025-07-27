@@ -5,16 +5,17 @@ import banner from "../assets/banner.svg";
 
 function Home() {
   const [roomId, setRoomId] = useState("");
+  const [userName, setUserName] = useState("");
   const navigate = useNavigate();
 
   const handleJoinRoom = () => {
-    navigate(`/room/${roomId}`);
-    console.log("Joining room:", roomId);
+    if (roomId.trim()) {
+      navigate(`/room/${roomId}`);
+      console.log("Joining room:", roomId);
+    }
   };
 
-  const handleCreateRoom = () => {
-    
-  };
+  const handleCreateRoom = () => {};
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 flex items-center justify-center p-4">
@@ -24,7 +25,6 @@ function Home() {
 
         <div className="relative z-10">
           <div className="text-center mb-10">
-            
             {/* Logo */}
             <div className="inline-flex items-center justify-center w-24 h-24  rounded-2xl">
               <img src={logo} alt="SketchXPad Logo" className="w-20 h-20" />
@@ -59,6 +59,23 @@ function Home() {
                 value={roomId}
                 onChange={(e) => setRoomId(e.target.value.toUpperCase())}
                 placeholder="Enter Room ID"
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg text-gray-800 placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
+                maxLength={6}
+              />
+            </div>
+            <div>
+              <label
+                htmlFor="roomId"
+                className="block text-sm font-medium text-gray-700 mb-3"
+              >
+                Name
+              </label>
+              <input
+                type="text"
+                id="name"
+                value={userName}
+                onChange={(e) => setUserName(e.target.value)}
+                placeholder="Enter Your Name"
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg text-gray-800 placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
                 maxLength={6}
               />
