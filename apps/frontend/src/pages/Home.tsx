@@ -9,13 +9,26 @@ function Home() {
   const navigate = useNavigate();
 
   const handleJoinRoom = () => {
-    if (roomId.trim()) {
+    if (roomId.trim() && userName.trim()) {
+      // Store user name in localStorage for the session
+      localStorage.setItem("userName", userName);
       navigate(`/room/${roomId}`);
-      console.log("Joining room:", roomId);
+      console.log("Joining room:", roomId, "as", userName);
     }
   };
 
-  const handleCreateRoom = () => {};
+  const handleCreateRoom = () => {
+    if (userName.trim()) {
+      // Generate a random room ID
+      const newRoomId = Math.random()
+        .toString(36)
+        .substring(2, 8)
+        .toUpperCase();
+      localStorage.setItem("userName", userName);
+      navigate(`/room/${newRoomId}`);
+      console.log("Created room:", newRoomId, "for", userName);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 flex items-center justify-center p-4">
@@ -77,13 +90,14 @@ function Home() {
                 onChange={(e) => setUserName(e.target.value)}
                 placeholder="Enter Your Name"
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg text-gray-800 placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
-                maxLength={6}
+                maxLength={20}
               />
             </div>
 
             <button
               onClick={handleJoinRoom}
-              className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-6 rounded-lg transition-colors"
+              disabled={!roomId.trim() || !userName.trim()}
+              className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white font-medium py-3 px-6 rounded-lg transition-colors"
             >
               Join Room
             </button>
@@ -104,7 +118,8 @@ function Home() {
             <p className="text-gray-500 text-sm mb-4">Don't have a room?</p>
             <button
               onClick={handleCreateRoom}
-              className="inline-flex items-center px-6 py-2 bg-white hover:bg-gray-50 text-gray-600 font-medium rounded-lg border border-gray-300 transition-colors"
+              disabled={!userName.trim()}
+              className="inline-flex items-center px-6 py-2 bg-white hover:bg-gray-50 disabled:bg-gray-100 disabled:cursor-not-allowed text-gray-600 font-medium rounded-lg border border-gray-300 transition-colors"
             >
               <svg
                 className="w-4 h-4 mr-2"

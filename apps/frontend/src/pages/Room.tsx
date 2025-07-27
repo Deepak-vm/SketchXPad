@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import api from "../api/axios";
-import ChatRoomClient from "../components/ChatRoomClient";
+import { ChatRoomClient } from "../components/ChatRoomClient";
 
 interface Message {
   message: string;
@@ -34,15 +34,34 @@ export function Room() {
   }, [roomId]);
 
   if (loading) {
-    return <div className="text-center">Loading room...</div>;
+    return (
+      <div className="min-h-screen bg-gray-100 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600 text-lg">Loading room...</p>
+        </div>
+      </div>
+    );
   }
 
   if (!roomId) {
-    return <div className="text-center">Room ID not found</div>;
+    return (
+      <div className="min-h-screen bg-gray-100 flex items-center justify-center">
+        <div className="text-center">
+          <div className="text-red-500 text-6xl mb-4">⚠️</div>
+          <p className="text-gray-800 text-xl font-semibold">
+            Room ID not found
+          </p>
+          <p className="text-gray-600 mt-2">
+            Please check the URL and try again
+          </p>
+        </div>
+      </div>
+    );
   }
 
   return (
-    <div className="min-h-screen bg-gray-100">
+    <div className="h-screen bg-gray-100">
       <ChatRoomClient messages={messages} id={roomId} />
     </div>
   );
