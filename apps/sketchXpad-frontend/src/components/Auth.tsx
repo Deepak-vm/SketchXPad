@@ -107,9 +107,7 @@ function SignUp() {
             placeholder="Enter your password"
             className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all duration-300 bg-gray-50 hover:bg-white"
           />
-        </div>
-
-      
+        </div>    
 
         <button
           type="submit"
