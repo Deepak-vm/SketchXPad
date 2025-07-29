@@ -1,7 +1,21 @@
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+
 function SignIn() {
+  const navigate = useNavigate();
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    // For demo purposes, just navigate to a test room
+    const roomId = Math.random().toString(36).substring(2, 15);
+    navigate(`/canvas/${roomId}`);
+  };
+
   return (
     <div className="space-y-6">
-      <form className="space-y-5">
+      <form className="space-y-5" onSubmit={handleSubmit}>
         <div>
           <label
             htmlFor="signin-email"
@@ -12,8 +26,11 @@ function SignIn() {
           <input
             id="signin-email"
             type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
             placeholder="Enter your email"
             className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all duration-300 bg-gray-50 hover:bg-white"
+            required
           />
         </div>
 
@@ -27,8 +44,11 @@ function SignIn() {
           <input
             id="signin-password"
             type="password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
             placeholder="Enter your password"
             className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all duration-300 bg-gray-50 hover:bg-white"
+            required
           />
         </div>
 
@@ -55,15 +75,38 @@ function SignIn() {
           Sign In
         </button>
       </form>
+
+      <div className="text-center">
+        <button
+          onClick={() => {
+            const roomId = Math.random().toString(36).substring(2, 15);
+            navigate(`/canvas/${roomId}`);
+          }}
+          className="text-sm text-gray-600 hover:text-blue-600 transition-colors"
+        >
+          Or continue as guest →
+        </button>
+      </div>
     </div>
   );
 }
 
 function SignUp() {
+  const navigate = useNavigate();
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    // For demo purposes, just navigate to a test room
+    const roomId = Math.random().toString(36).substring(2, 15);
+    navigate(`/canvas/${roomId}`);
+  };
+
   return (
     <div className="space-y-6">
-
-      <form className="space-y-4">
+      <form className="space-y-4" onSubmit={handleSubmit}>
         <div>
           <label
             htmlFor="signup-name"
@@ -74,8 +117,11 @@ function SignUp() {
           <input
             id="signup-name"
             type="text"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
             placeholder="Enter your full name"
             className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all duration-300 bg-gray-50 hover:bg-white"
+            required
           />
         </div>
 
@@ -89,8 +135,11 @@ function SignUp() {
           <input
             id="signup-email"
             type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
             placeholder="Enter your email"
             className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all duration-300 bg-gray-50 hover:bg-white"
+            required
           />
         </div>
 
@@ -104,10 +153,13 @@ function SignUp() {
           <input
             id="signup-password"
             type="password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
             placeholder="Enter your password"
             className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all duration-300 bg-gray-50 hover:bg-white"
+            required
           />
-        </div>    
+        </div>
 
         <button
           type="submit"
@@ -117,6 +169,17 @@ function SignUp() {
         </button>
       </form>
 
+      <div className="text-center">
+        <button
+          onClick={() => {
+            const roomId = Math.random().toString(36).substring(2, 15);
+            navigate(`/canvas/${roomId}`);
+          }}
+          className="text-sm text-gray-600 hover:text-blue-600 transition-colors"
+        >
+          Or continue as guest →
+        </button>
+      </div>
     </div>
   );
 }
