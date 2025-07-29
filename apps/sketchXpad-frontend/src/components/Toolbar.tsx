@@ -74,24 +74,11 @@ export const Toolbar: React.FC<ToolbarProps> = ({
   onOpacityChange,
   backgroundColor,
   onBackgroundColorChange,
-  isVisible = true,
-  onToggleVisibility,
 }) => {
   return (
     <>
-      {/* Toggle Button */}
-      {onToggleVisibility && (
-        <button
-          onClick={onToggleVisibility}
-          className="fixed top-4 left-4 z-50 bg-white border border-gray-300 rounded-lg p-2 shadow-lg hover:bg-gray-50 transition-colors"
-          title={isVisible ? "Hide Tools" : "Show Tools"}
-        >
-          {isVisible ? "◀️" : "▶️"}
-        </button>
-      )}
-
       {/* Toolbar */}
-      {isVisible && (
+      {
         <div className="bg-white border-r border-gray-200 p-4 flex flex-col gap-6 w-64 h-full overflow-y-auto">
           {/* Tools */}
           <div>
@@ -101,14 +88,14 @@ export const Toolbar: React.FC<ToolbarProps> = ({
                 <button
                   key={tool.id}
                   onClick={() => onToolChange(tool.id)}
-                  className={`p-3 rounded-lg border-2 transition-all duration-200 flex flex-col items-center gap-1 ${
+                  className={`p-2 rounded-md border-2 transition-all duration-200 flex items-center justify-center min-h-[2.5rem] ${
                     selectedTool === tool.id
                       ? "border-blue-500 bg-blue-50 text-blue-600"
                       : "border-gray-200 hover:border-gray-300 text-gray-600"
                   }`}
+                  title={tool.label}
                 >
-                  <span className="text-lg">{tool.icon}</span>
-                  <span className="text-xs font-medium">{tool.label}</span>
+                  <span className="text-base">{tool.icon}</span>
                 </button>
               ))}
             </div>
@@ -217,7 +204,7 @@ export const Toolbar: React.FC<ToolbarProps> = ({
             </div>
           </div>
         </div>
-      )}
+      }
     </>
   );
 };

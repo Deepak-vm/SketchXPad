@@ -13,7 +13,6 @@ export default function Canvas() {
   const [strokeWidth, setStrokeWidth] = useState(2);
   const [opacity, setOpacity] = useState(1);
   const [backgroundColor, setBackgroundColor] = useState("#FFFFFF");
-  const [isToolbarVisible, setIsToolbarVisible] = useState(true);
 
   const handleShare = () => {
     if (navigator.share) {
@@ -57,13 +56,12 @@ export default function Canvas() {
           onOpacityChange={setOpacity}
           backgroundColor={backgroundColor}
           onBackgroundColorChange={setBackgroundColor}
-          isVisible={isToolbarVisible}
-          onToggleVisibility={() => setIsToolbarVisible(!isToolbarVisible)}
+          
         />
 
         {/* Canvas area */}
         <div
-          className={`flex-1 relative transition-all duration-300 ${!isToolbarVisible ? "ml-12" : ""}`}
+          className={`flex-1 relative transition-all duration-300`}
         >
           <DrawingCanvas
             selectedTool={selectedTool}

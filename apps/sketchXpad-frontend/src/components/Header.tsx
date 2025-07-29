@@ -1,5 +1,6 @@
 import React from "react";
 import logo from "../assets/logo.svg";
+import banner from "../assets/banner.svg";
 
 interface HeaderProps {
   roomId: string;
@@ -17,10 +18,10 @@ export const Header: React.FC<HeaderProps> = ({
   return (
     <header className="bg-white border-b border-gray-200 px-6 py-3 flex items-center justify-between">
       {/* Left section - Logo and Room Info */}
-      <div className="flex items-center gap-4">
-        <div className="flex items-center gap-2">
+      <div className="flex items-center">
+        <div className="flex items-center">
           <img src={logo} alt="SketchXPad" className="w-8 h-8" />
-          <h1 className="text-xl font-bold text-gray-800">SketchXPad</h1>
+          <img src={banner} alt="banner" className="w-40 h-10" />
         </div>
 
         <div className="h-6 w-px bg-gray-300" />

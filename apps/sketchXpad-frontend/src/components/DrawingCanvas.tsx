@@ -1,4 +1,5 @@
 import React, { useRef, useEffect, useState, useCallback } from "react";
+import { Trash2 } from "lucide-react";
 
 export type Tool =
   | "pen"
@@ -43,6 +44,8 @@ export default function DrawingCanvas({
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [isDrawing, setIsDrawing] = useState(false);
   const [elements, setElements] = useState<DrawingElement[]>([]);
+  const [history, setHistory] = useState<DrawingElement[][]>([[]]);
+  const [historyIndex, setHistoryIndex] = useState(0);
   const [currentElement, setCurrentElement] = useState<DrawingElement | null>(
     null
   );
@@ -212,6 +215,23 @@ export default function DrawingCanvas({
   }, [redrawCanvas]);
 
   useEffect(() => {
+    const handleKeyboard = (e: KeyboardEvent) => {
+      if (e.ctrlKey || e.metaKey) {
+        if (e.key === "z" && !e.shiftKey) {
+          e.preventDefault();
+          undoLastAction();
+        } else if (e.key === "y" || (e.key === "z" && e.shiftKey)) {
+          e.preventDefault();
+          redoLastAction();
+        }
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyboard);
+    return () => window.removeEventListener("keydown", handleKeyboard);
+  }, [historyIndex, history.length]);
+
+  useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
 
@@ -301,17 +321,41 @@ export default function DrawingCanvas({
     if (!isDrawing || !currentElement) return;
 
     setIsDrawing(false);
-    setElements((prev) => [...prev, currentElement]);
+    const newElements = [...elements, currentElement];
+    setElements(newElements);
     setCurrentElement(null);
+
+    // Add to history for undo/redo
+    const newHistory = history.slice(0, historyIndex + 1);
+    newHistory.push(newElements);
+    setHistory(newHistory);
+    setHistoryIndex(newHistory.length - 1);
   };
 
   const clearCanvas = () => {
     setElements([]);
     setCurrentElement(null);
+    // Add clear state to history
+    const newHistory = history.slice(0, historyIndex + 1);
+    newHistory.push([]);
+    setHistory(newHistory);
+    setHistoryIndex(newHistory.length - 1);
   };
 
   const undoLastAction = () => {
-    setElements((prev) => prev.slice(0, -1));
+    if (historyIndex > 0) {
+      const newIndex = historyIndex - 1;
+      setHistoryIndex(newIndex);
+      setElements(history[newIndex]);
+    }
+  };
+
+  const redoLastAction = () => {
+    if (historyIndex < history.length - 1) {
+      const newIndex = historyIndex + 1;
+      setHistoryIndex(newIndex);
+      setElements(history[newIndex]);
+    }
   };
 
   return (
@@ -332,16 +376,26 @@ export default function DrawingCanvas({
       <div className="absolute top-4 right-4 flex gap-2">
         <button
           onClick={undoLastAction}
-          className="px-3 py-2 bg-white rounded-lg shadow-md hover:bg-gray-50 transition-colors"
-          disabled={elements.length === 0}
+          className="px-3 py-2 bg-white rounded-lg shadow-md hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          disabled={historyIndex <= 0}
+          title="Undo (Ctrl+Z)"
         >
-          Undo
+          <span className="text-lg">↶</span>
+        </button>
+        <button
+          onClick={redoLastAction}
+          className="px-3 py-2 bg-white rounded-lg shadow-md hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          disabled={historyIndex >= history.length - 1}
+          title="Redo (Ctrl+Y)"
+        >
+          <span className="text-lg">↷</span>
         </button>
         <button
           onClick={clearCanvas}
-          className="px-3 py-2 bg-red-500 text-white rounded-lg shadow-md hover:bg-red-600 transition-colors"
+          className="px-3 py-2 bg-white text-red-500 rounded-lg shadow-md hover:bg-red-600 hover:text-white transition-colors"
+          title="Clear All"
         >
-          Clear
+          <Trash2 size={18} />
         </button>
       </div>
     </div>
