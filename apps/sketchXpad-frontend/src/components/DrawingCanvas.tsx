@@ -3,10 +3,21 @@ import { Trash2 } from "lucide-react";
 
 // Import types and utilities
 export type { Tool } from "./canvas/types";
-import type { DrawingCanvasProps, DrawingElement, Point, Tool } from "./canvas/types";
+import type {
+  DrawingCanvasProps,
+  DrawingElement,
+  Point,
+  Tool,
+} from "./canvas/types";
 import { drawElement, getMousePos } from "./canvas/drawingUtils";
-import { findElementAtPoint, drawSelectionOutline } from "./canvas/selectionUtils";
-import { createKeyboardHandler, type HistoryActions } from "./canvas/keyboardHandlers";
+import {
+  findElementAtPoint,
+  drawSelectionOutline,
+} from "./canvas/selectionUtils";
+import {
+  createKeyboardHandler,
+  type HistoryActions,
+} from "./canvas/keyboardHandlers";
 import { useCanvasState } from "./canvas/useCanvasState";
 
 export default function DrawingCanvas({
@@ -17,7 +28,7 @@ export default function DrawingCanvas({
   onToolChange,
 }: DrawingCanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  
+
   // Use custom hook for state management
   const {
     isDrawing,
@@ -74,38 +85,61 @@ export default function DrawingCanvas({
       setElements(newElements);
       setSelectedElement(null);
     }
-  }, [selectedElement, elements, onToolChange, setIsTyping, setTextInput, setTextPosition, setElements, setSelectedElement]);
+  }, [
+    selectedElement,
+    elements,
+    onToolChange,
+    setIsTyping,
+    setTextInput,
+    setTextPosition,
+    setElements,
+    setSelectedElement,
+  ]);
 
-  const addTextElement = useCallback((text: string, position: Point) => {
-    const newElement: DrawingElement = {
-      id: Date.now().toString(),
-      type: "text",
-      points: [position],
-      color: strokeColor,
-      strokeWidth,
-      opacity: 1,
-      text: text,
-    };
+  const addTextElement = useCallback(
+    (text: string, position: Point) => {
+      const newElement: DrawingElement = {
+        id: Date.now().toString(),
+        type: "text",
+        points: [position],
+        color: strokeColor,
+        strokeWidth,
+        opacity: 1,
+        text: text,
+      };
 
-    const newElements = [...elements, newElement];
-    setElements(newElements);
-    addToHistory(newElements);
-  }, [elements, strokeColor, strokeWidth, setElements, addToHistory]);
+      const newElements = [...elements, newElement];
+      setElements(newElements);
+      addToHistory(newElements);
+    },
+    [elements, strokeColor, strokeWidth, setElements, addToHistory]
+  );
 
   const redrawCanvas = useCallback(() => {
     const canvas = canvasRef.current;
     const ctx = canvas?.getContext("2d");
     if (!canvas || !ctx) return;
 
-    // Clear canvas and set background
-    ctx.fillStyle = backgroundColor;
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    // Clear canvas to transparent
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-    // Draw all elements
-    elements.forEach((element) => drawElement(ctx, element));
+    // Separate eraser elements from other elements
+    const nonEraserElements = elements.filter((el) => el.type !== "eraser");
+    const eraserElements = elements.filter((el) => el.type === "eraser");
 
-    // Draw current element being drawn
-    if (currentElement) {
+    // Draw all non-eraser elements first
+    nonEraserElements.forEach((element) => drawElement(ctx, element));
+
+    // Draw current element being drawn (if it's not an eraser)
+    if (currentElement && currentElement.type !== "eraser") {
+      drawElement(ctx, currentElement);
+    }
+
+    // Draw all eraser elements last (they will create holes)
+    eraserElements.forEach((element) => drawElement(ctx, element));
+
+    // Draw current eraser element being drawn
+    if (currentElement && currentElement.type === "eraser") {
       drawElement(ctx, currentElement);
     }
 
@@ -260,7 +294,7 @@ export default function DrawingCanvas({
   const handleMouseDown = (e: React.MouseEvent<HTMLCanvasElement>) => {
     const canvas = canvasRef.current;
     if (!canvas) return;
-    
+
     const point = getMousePos(canvas, e);
 
     // Handle select tool
@@ -323,7 +357,7 @@ export default function DrawingCanvas({
   const handleMouseMove = (e: React.MouseEvent<HTMLCanvasElement>) => {
     const canvas = canvasRef.current;
     if (!canvas) return;
-    
+
     const currentPoint = getMousePos(canvas, e);
 
     // Handle hover detection for select tool
@@ -386,7 +420,7 @@ export default function DrawingCanvas({
   const handleDoubleClick = (e: React.MouseEvent<HTMLCanvasElement>) => {
     const canvas = canvasRef.current;
     if (!canvas) return;
-    
+
     const point = getMousePos(canvas, e);
     const clickedElement = findElementAtPoint(point, elements);
 
@@ -428,6 +462,7 @@ export default function DrawingCanvas({
         onDoubleClick={handleDoubleClick}
         onMouseLeave={() => setIsDrawing(false)}
         style={{
+          background: backgroundColor,
           cursor:
             selectedTool === "select"
               ? hoveredElement &&
