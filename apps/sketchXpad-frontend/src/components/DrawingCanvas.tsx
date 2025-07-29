@@ -1,196 +1,96 @@
-import React, { useRef, useEffect, useState, useCallback } from "react";
+import React, { useRef, useEffect, useCallback } from "react";
 import { Trash2 } from "lucide-react";
 
-export type Tool =
-  | "pen"
-  | "rectangle"
-  | "circle"
-  | "line"
-  | "eraser"
-  | "select"
-  | "arrow"
-  | "text";
-
-interface Point {
-  x: number;
-  y: number;
-}
-
-interface DrawingElement {
-  id: string;
-  type: Tool;
-  points: Point[];
-  color: string;
-  strokeWidth: number;
-  opacity: number;
-  startPoint?: Point;
-  endPoint?: Point;
-  text?: string;
-}
-
-interface DrawingCanvasProps {
-  selectedTool: string;
-  strokeColor: string;
-  strokeWidth: number;
-  backgroundColor: string;
-}
+// Import types and utilities
+export type { Tool } from "./canvas/types";
+import type { DrawingCanvasProps, DrawingElement, Point, Tool } from "./canvas/types";
+import { drawElement, getMousePos } from "./canvas/drawingUtils";
+import { findElementAtPoint, drawSelectionOutline } from "./canvas/selectionUtils";
+import { createKeyboardHandler, type HistoryActions } from "./canvas/keyboardHandlers";
+import { useCanvasState } from "./canvas/useCanvasState";
 
 export default function DrawingCanvas({
   selectedTool,
   strokeColor,
   strokeWidth,
   backgroundColor,
+  onToolChange,
 }: DrawingCanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const [isDrawing, setIsDrawing] = useState(false);
-  const [elements, setElements] = useState<DrawingElement[]>([]);
-  const [history, setHistory] = useState<DrawingElement[][]>([[]]);
-  const [historyIndex, setHistoryIndex] = useState(0);
-  const [currentElement, setCurrentElement] = useState<DrawingElement | null>(
-    null
-  );
-  const [startPoint, setStartPoint] = useState<Point>({ x: 0, y: 0 });
+  
+  // Use custom hook for state management
+  const {
+    isDrawing,
+    elements,
+    history,
+    historyIndex,
+    currentElement,
+    startPoint,
+    isTyping,
+    textInput,
+    textPosition,
+    showCursor,
+    selectedElement,
+    isDragging,
+    dragOffset,
+    hoveredElement,
+    setIsDrawing,
+    setElements,
+    setCurrentElement,
+    setStartPoint,
+    setIsTyping,
+    setTextInput,
+    setTextPosition,
+    setShowCursor,
+    setSelectedElement,
+    setIsDragging,
+    setDragOffset,
+    setHoveredElement,
+    addToHistory,
+    clearCanvas,
+    undoLastAction,
+    redoLastAction,
+    deleteSelectedElement,
+  } = useCanvasState();
 
-  const getMousePos = useCallback((e: React.MouseEvent<HTMLCanvasElement>) => {
-    const canvas = canvasRef.current;
-    if (!canvas) return { x: 0, y: 0 };
+  const editSelectedElement = useCallback(() => {
+    if (!selectedElement) return;
 
-    const rect = canvas.getBoundingClientRect();
-    const scaleX = canvas.width / rect.width;
-    const scaleY = canvas.height / rect.height;
+    const element = elements.find((el) => el.id === selectedElement);
+    if (!element) return;
 
-    return {
-      x: (e.clientX - rect.left) * scaleX,
-      y: (e.clientY - rect.top) * scaleY,
-    };
-  }, []);
-
-  const drawElement = useCallback(
-    (ctx: CanvasRenderingContext2D, element: DrawingElement) => {
-      ctx.globalAlpha = element.opacity;
-      ctx.strokeStyle = element.color;
-      ctx.lineWidth = element.strokeWidth;
-      ctx.lineCap = "round";
-      ctx.lineJoin = "round";
-
-      switch (element.type) {
-        case "pen":
-          if (element.points.length > 1) {
-            ctx.beginPath();
-            ctx.moveTo(element.points[0].x, element.points[0].y);
-            for (let i = 1; i < element.points.length; i++) {
-              ctx.lineTo(element.points[i].x, element.points[i].y);
-            }
-            ctx.stroke();
-          }
-          break;
-
-        case "rectangle":
-          if (element.points.length >= 2) {
-            const start = element.points[0];
-            const end = element.points[element.points.length - 1];
-            const width = end.x - start.x;
-            const height = end.y - start.y;
-            ctx.beginPath();
-            ctx.rect(start.x, start.y, width, height);
-            ctx.stroke();
-          }
-          break;
-
-        case "circle":
-          if (element.points.length >= 2) {
-            const start = element.points[0];
-            const end = element.points[element.points.length - 1];
-            const radius = Math.sqrt(
-              Math.pow(end.x - start.x, 2) + Math.pow(end.y - start.y, 2)
-            );
-            ctx.beginPath();
-            ctx.arc(start.x, start.y, radius, 0, 2 * Math.PI);
-            ctx.stroke();
-          }
-          break;
-
-        case "line":
-          if (element.points.length >= 2) {
-            const start = element.points[0];
-            const end = element.points[element.points.length - 1];
-            ctx.beginPath();
-            ctx.moveTo(start.x, start.y);
-            ctx.lineTo(end.x, end.y);
-            ctx.stroke();
-          }
-          break;
-
-        case "eraser":
-          if (element.points.length > 1) {
-            ctx.save();
-            ctx.globalCompositeOperation = "destination-out";
-            ctx.lineWidth = element.strokeWidth;
-            ctx.lineCap = "round";
-            ctx.lineJoin = "round";
-            ctx.beginPath();
-            ctx.moveTo(element.points[0].x, element.points[0].y);
-            for (let i = 1; i < element.points.length; i++) {
-              ctx.lineTo(element.points[i].x, element.points[i].y);
-            }
-            ctx.stroke();
-            ctx.restore();
-          }
-          break;
-
-        case "arrow":
-          if (element.points.length >= 2) {
-            const start = element.points[0];
-            const end = element.points[element.points.length - 1];
-
-            // Draw the line
-            ctx.beginPath();
-            ctx.moveTo(start.x, start.y);
-            ctx.lineTo(end.x, end.y);
-            ctx.stroke();
-
-            // Draw arrowhead
-            const headLength = Math.max(10, element.strokeWidth * 2);
-            const angle = Math.atan2(end.y - start.y, end.x - start.x);
-
-            ctx.beginPath();
-            ctx.moveTo(end.x, end.y);
-            ctx.lineTo(
-              end.x - headLength * Math.cos(angle - Math.PI / 6),
-              end.y - headLength * Math.sin(angle - Math.PI / 6)
-            );
-            ctx.moveTo(end.x, end.y);
-            ctx.lineTo(
-              end.x - headLength * Math.cos(angle + Math.PI / 6),
-              end.y - headLength * Math.sin(angle + Math.PI / 6)
-            );
-            ctx.stroke();
-          }
-          break;
-
-        case "text":
-          if (element.text && element.points.length > 0) {
-            ctx.save();
-            ctx.fillStyle = element.color;
-            ctx.globalAlpha = element.opacity;
-            // Better font sizing based on stroke width
-            const fontSize = Math.max(16, element.strokeWidth * 8);
-            ctx.font = `${fontSize}px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif`;
-            ctx.textBaseline = "top";
-            ctx.fillText(
-              element.text,
-              element.points[0].x,
-              element.points[0].y
-            );
-            ctx.restore();
-          }
-          break;
+    // Only text elements can be edited for now
+    if (element.type === "text" && element.text && element.points.length > 0) {
+      // Enter edit mode for text
+      if (onToolChange) {
+        onToolChange("text"); // Switch to text tool temporarily
       }
+      setIsTyping(true);
+      setTextInput(element.text);
+      setTextPosition(element.points[0]);
 
-      ctx.globalAlpha = 1;
-    },
-    []
-  );
+      // Remove the element temporarily while editing
+      const newElements = elements.filter((el) => el.id !== selectedElement);
+      setElements(newElements);
+      setSelectedElement(null);
+    }
+  }, [selectedElement, elements, onToolChange, setIsTyping, setTextInput, setTextPosition, setElements, setSelectedElement]);
+
+  const addTextElement = useCallback((text: string, position: Point) => {
+    const newElement: DrawingElement = {
+      id: Date.now().toString(),
+      type: "text",
+      points: [position],
+      color: strokeColor,
+      strokeWidth,
+      opacity: 1,
+      text: text,
+    };
+
+    const newElements = [...elements, newElement];
+    setElements(newElements);
+    addToHistory(newElements);
+  }, [elements, strokeColor, strokeWidth, setElements, addToHistory]);
 
   const redrawCanvas = useCallback(() => {
     const canvas = canvasRef.current;
@@ -208,29 +108,137 @@ export default function DrawingCanvas({
     if (currentElement) {
       drawElement(ctx, currentElement);
     }
-  }, [elements, currentElement, backgroundColor, drawElement]);
+
+    // Draw current text being typed
+    if (isTyping && textPosition) {
+      ctx.save();
+      ctx.fillStyle = strokeColor;
+      ctx.globalAlpha = 1;
+      const fontSize = Math.max(16, strokeWidth * 8);
+      ctx.font = `${fontSize}px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif`;
+      ctx.textBaseline = "top";
+
+      if (textInput) {
+        ctx.fillText(textInput, textPosition.x, textPosition.y);
+      }
+
+      // Draw a blinking cursor only when actively typing
+      if (showCursor) {
+        const textWidth = textInput ? ctx.measureText(textInput).width : 0;
+        const cursorX = textPosition.x + textWidth;
+        const cursorHeight = fontSize;
+        ctx.fillRect(cursorX, textPosition.y, 2, cursorHeight);
+      }
+
+      ctx.restore();
+    }
+
+    // Draw selection outline for selected element
+    if (selectedElement && selectedTool === "select") {
+      const element = elements.find((el) => el.id === selectedElement);
+      if (element) {
+        drawSelectionOutline(ctx, element);
+      }
+    }
+  }, [
+    elements,
+    currentElement,
+    backgroundColor,
+    isTyping,
+    textPosition,
+    textInput,
+    strokeColor,
+    strokeWidth,
+    showCursor,
+    selectedElement,
+    selectedTool,
+  ]);
 
   useEffect(() => {
     redrawCanvas();
   }, [redrawCanvas]);
 
+  // Blinking cursor effect for text mode
   useEffect(() => {
-    const handleKeyboard = (e: KeyboardEvent) => {
-      if (e.ctrlKey || e.metaKey) {
-        if (e.key === "z" && !e.shiftKey) {
-          e.preventDefault();
-          undoLastAction();
-        } else if (e.key === "y" || (e.key === "z" && e.shiftKey)) {
-          e.preventDefault();
-          redoLastAction();
-        }
+    if (isTyping) {
+      const interval = setInterval(() => {
+        setShowCursor((prev) => !prev);
+      }, 500); // Blink every 500ms
+      return () => clearInterval(interval);
+    } else {
+      setShowCursor(true);
+    }
+  }, [isTyping, setShowCursor]);
+
+  // Clear text state when tool changes
+  useEffect(() => {
+    if (selectedTool !== "text" && isTyping) {
+      // Finish any current text when switching tools
+      if (textPosition && textInput.trim()) {
+        addTextElement(textInput.trim(), textPosition);
       }
+
+      // Clear text state
+      setIsTyping(false);
+      setTextInput("");
+      setTextPosition(null);
+    }
+  }, [
+    selectedTool,
+    isTyping,
+    textPosition,
+    textInput,
+    addTextElement,
+    setIsTyping,
+    setTextInput,
+    setTextPosition,
+  ]);
+
+  // Keyboard event handling
+  useEffect(() => {
+    const actions: HistoryActions = {
+      undoLastAction,
+      redoLastAction,
+      clearCanvas,
+      deleteSelectedElement,
+      editSelectedElement,
     };
+
+    const handleKeyboard = createKeyboardHandler(
+      selectedTool,
+      selectedElement,
+      isTyping,
+      textPosition,
+      textInput,
+      elements,
+      actions,
+      setIsTyping,
+      setTextInput,
+      setTextPosition,
+      addTextElement
+    );
 
     window.addEventListener("keydown", handleKeyboard);
     return () => window.removeEventListener("keydown", handleKeyboard);
-  }, [historyIndex, history.length]);
+  }, [
+    selectedTool,
+    selectedElement,
+    isTyping,
+    textPosition,
+    textInput,
+    elements,
+    undoLastAction,
+    redoLastAction,
+    clearCanvas,
+    deleteSelectedElement,
+    editSelectedElement,
+    setIsTyping,
+    setTextInput,
+    setTextPosition,
+    addTextElement,
+  ]);
 
+  // Canvas resize handling
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -250,39 +258,61 @@ export default function DrawingCanvas({
   }, [redrawCanvas]);
 
   const handleMouseDown = (e: React.MouseEvent<HTMLCanvasElement>) => {
-    if (selectedTool === "select") return;
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    
+    const point = getMousePos(canvas, e);
 
-    const point = getMousePos(e);
+    // Handle select tool
+    if (selectedTool === "select") {
+      // Find element at click point
+      const clickedElement = findElementAtPoint(point, elements);
+      if (clickedElement) {
+        setSelectedElement(clickedElement.id);
+        setIsDragging(true);
+        // Calculate offset from element's first point to click point
+        const elementPoint = clickedElement.points[0];
+        setDragOffset({
+          x: point.x - elementPoint.x,
+          y: point.y - elementPoint.y,
+        });
+      } else {
+        setSelectedElement(null);
+      }
+      return;
+    }
+
     setIsDrawing(true);
     setStartPoint(point);
 
+    // If switching from text tool or clicking elsewhere, finish any current text
+    if (isTyping && textPosition) {
+      if (textInput.trim()) {
+        addTextElement(textInput.trim(), textPosition);
+      }
+
+      // Clear text state
+      setIsTyping(false);
+      setTextInput("");
+      setTextPosition(null);
+    }
+
     // Handle text tool
     if (selectedTool === "text") {
-      const text = prompt("Enter text:");
-      if (text && text.trim()) {
-        const newElement: DrawingElement = {
-          id: Date.now().toString(),
-          type: "text",
-          points: [point],
-          color: strokeColor,
-          strokeWidth,
-          opacity: 1,
-          text: text.trim(),
-        };
-        setElements((prev) => [...prev, newElement]);
-      }
+      // Start new text input
+      setIsTyping(true);
+      setTextInput("");
+      setTextPosition(point);
       setIsDrawing(false);
       return;
     }
 
-    // Get the eraser color based on background (though eraser uses destination-out)
-    const drawingColor = strokeColor; // Use stroke color for all tools, eraser will use composite operation
-
+    // Create new drawing element
     const newElement: DrawingElement = {
       id: Date.now().toString(),
       type: selectedTool as Tool,
       points: [point],
-      color: drawingColor,
+      color: strokeColor,
       strokeWidth,
       opacity: 1,
     };
@@ -291,16 +321,52 @@ export default function DrawingCanvas({
   };
 
   const handleMouseMove = (e: React.MouseEvent<HTMLCanvasElement>) => {
-    if (!isDrawing || !currentElement) return;
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    
+    const currentPoint = getMousePos(canvas, e);
 
-    const point = getMousePos(e);
+    // Handle hover detection for select tool
+    if (selectedTool === "select" && !isDragging) {
+      const hoveredEl = findElementAtPoint(currentPoint, elements);
+      setHoveredElement(hoveredEl ? hoveredEl.id : null);
+    }
+
+    // Handle select tool dragging
+    if (selectedTool === "select" && isDragging && selectedElement) {
+      // Calculate new position
+      const newX = currentPoint.x - dragOffset.x;
+      const newY = currentPoint.y - dragOffset.y;
+
+      // Update the selected element's position
+      setElements((prevElements) =>
+        prevElements.map((element) => {
+          if (element.id === selectedElement) {
+            const deltaX = newX - element.points[0].x;
+            const deltaY = newY - element.points[0].y;
+
+            return {
+              ...element,
+              points: element.points.map((p) => ({
+                x: p.x + deltaX,
+                y: p.y + deltaY,
+              })),
+            };
+          }
+          return element;
+        })
+      );
+      return;
+    }
+
+    if (!isDrawing || !currentElement) return;
 
     if (selectedTool === "pen" || selectedTool === "eraser") {
       setCurrentElement((prev) =>
         prev
           ? {
               ...prev,
-              points: [...prev.points, point],
+              points: [...prev.points, currentPoint],
             }
           : null
       );
@@ -310,14 +376,36 @@ export default function DrawingCanvas({
         prev
           ? {
               ...prev,
-              points: [startPoint, point],
+              points: [startPoint, currentPoint],
             }
           : null
       );
     }
   };
 
+  const handleDoubleClick = (e: React.MouseEvent<HTMLCanvasElement>) => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    
+    const point = getMousePos(canvas, e);
+    const clickedElement = findElementAtPoint(point, elements);
+
+    if (clickedElement && clickedElement.type === "text") {
+      // Directly enter edit mode for text elements
+      setSelectedElement(clickedElement.id);
+      editSelectedElement();
+    }
+  };
+
   const handleMouseUp = () => {
+    // Handle select tool
+    if (selectedTool === "select" && isDragging) {
+      setIsDragging(false);
+      // Add moved element state to history
+      addToHistory([...elements]);
+      return;
+    }
+
     if (!isDrawing || !currentElement) return;
 
     setIsDrawing(false);
@@ -326,49 +414,33 @@ export default function DrawingCanvas({
     setCurrentElement(null);
 
     // Add to history for undo/redo
-    const newHistory = history.slice(0, historyIndex + 1);
-    newHistory.push(newElements);
-    setHistory(newHistory);
-    setHistoryIndex(newHistory.length - 1);
-  };
-
-  const clearCanvas = () => {
-    setElements([]);
-    setCurrentElement(null);
-    // Add clear state to history
-    const newHistory = history.slice(0, historyIndex + 1);
-    newHistory.push([]);
-    setHistory(newHistory);
-    setHistoryIndex(newHistory.length - 1);
-  };
-
-  const undoLastAction = () => {
-    if (historyIndex > 0) {
-      const newIndex = historyIndex - 1;
-      setHistoryIndex(newIndex);
-      setElements(history[newIndex]);
-    }
-  };
-
-  const redoLastAction = () => {
-    if (historyIndex < history.length - 1) {
-      const newIndex = historyIndex + 1;
-      setHistoryIndex(newIndex);
-      setElements(history[newIndex]);
-    }
+    addToHistory(newElements);
   };
 
   return (
     <div className="w-full h-full relative">
       <canvas
         ref={canvasRef}
-        className="absolute inset-0 cursor-crosshair"
+        className="absolute inset-0"
         onMouseDown={handleMouseDown}
         onMouseMove={handleMouseMove}
         onMouseUp={handleMouseUp}
+        onDoubleClick={handleDoubleClick}
         onMouseLeave={() => setIsDrawing(false)}
         style={{
-          cursor: selectedTool === "eraser" ? "crosshair" : "crosshair",
+          cursor:
+            selectedTool === "select"
+              ? hoveredElement &&
+                elements.find((el) => el.id === hoveredElement)?.type === "text"
+                ? "text"
+                : hoveredElement
+                  ? "move"
+                  : "default"
+              : selectedTool === "text"
+                ? "text"
+                : selectedTool === "eraser"
+                  ? "crosshair"
+                  : "crosshair",
         }}
       />
 

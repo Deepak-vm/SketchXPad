@@ -20,7 +20,7 @@ const tools: { id: Tool; label: string; icon: string }[] = [
   { id: "select", label: "Select", icon: "↖️" },
   { id: "pen", label: "Pen", icon: "✏️" },
   { id: "rectangle", label: "Rectangle", icon: "▭" },
-  { id: "circle", label: "Circle", icon: "○" },
+  { id: "ellipse", label: "Ellipse", icon: "○" },
   { id: "line", label: "Line", icon: "📏" },
   { id: "arrow", label: "Arrow", icon: "➡️" },
   { id: "text", label: "Text", icon: "🔤" },

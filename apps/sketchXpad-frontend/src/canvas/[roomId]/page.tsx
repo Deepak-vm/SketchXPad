@@ -56,18 +56,16 @@ export default function Canvas() {
           onOpacityChange={setOpacity}
           backgroundColor={backgroundColor}
           onBackgroundColorChange={setBackgroundColor}
-          
         />
 
         {/* Canvas area */}
-        <div
-          className={`flex-1 relative transition-all duration-300`}
-        >
+        <div className={`flex-1 relative transition-all duration-300`}>
           <DrawingCanvas
             selectedTool={selectedTool}
             strokeColor={selectedColor}
             strokeWidth={strokeWidth}
             backgroundColor={backgroundColor}
+            onToolChange={setSelectedTool}
           />
         </div>
       </div>
