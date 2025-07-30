@@ -20,8 +20,8 @@ export const Header: React.FC<HeaderProps> = ({
       {/* Left section - Logo and Room Info */}
       <div className="flex items-center">
         <div className="flex items-center">
-          <img src={logo} alt="SketchXPad" className="w-8 h-8" />
-          <img src={banner} alt="banner" className="w-40 h-10" />
+          <img src={logo} alt="SketchXPad" className="w-8 h-12" />
+          <img src={banner} alt="banner" className="w-40 h-12" />
         </div>
 
         <div className="h-6 w-px bg-gray-300" />

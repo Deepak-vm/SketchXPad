@@ -124,6 +124,9 @@ importers:
 
   apps/sketchXpad-frontend:
     dependencies:
+      axios:
+        specifier: ^1.11.0
+        version: 1.11.0
       lucide-react:
         specifier: ^0.533.0
         version: 0.533.0(react@19.1.0)

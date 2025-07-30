@@ -1,10 +1,10 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import type { DrawingElement, Point } from './types';
 
-export const useCanvasState = () => {
+export const useCanvasState = (initialElements: DrawingElement[] = []) => {
     const [isDrawing, setIsDrawing] = useState(false);
-    const [elements, setElements] = useState<DrawingElement[]>([]);
-    const [history, setHistory] = useState<DrawingElement[][]>([[]]);
+    const [elements, setElements] = useState<DrawingElement[]>(initialElements);
+    const [history, setHistory] = useState<DrawingElement[][]>([initialElements]);
     const [historyIndex, setHistoryIndex] = useState(0);
     const [currentElement, setCurrentElement] = useState<DrawingElement | null>(null);
     const [startPoint, setStartPoint] = useState<Point>({ x: 0, y: 0 });
@@ -16,6 +16,15 @@ export const useCanvasState = () => {
     const [isDragging, setIsDragging] = useState(false);
     const [dragOffset, setDragOffset] = useState<Point>({ x: 0, y: 0 });
     const [hoveredElement, setHoveredElement] = useState<string | null>(null);
+
+    // Update elements when initialElements change
+    useEffect(() => {
+        if (initialElements.length > 0 && elements.length === 0) {
+            setElements(initialElements);
+            setHistory([initialElements]);
+            setHistoryIndex(0);
+        }
+    }, [initialElements, elements.length]);
 
     const addToHistory = useCallback((newElements: DrawingElement[]) => {
         const newHistory = history.slice(0, historyIndex + 1);

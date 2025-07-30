@@ -26,6 +26,7 @@ export default function DrawingCanvas({
   strokeWidth,
   backgroundColor,
   onToolChange,
+  initialElements = [],
 }: DrawingCanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
@@ -62,7 +63,7 @@ export default function DrawingCanvas({
     undoLastAction,
     redoLastAction,
     deleteSelectedElement,
-  } = useCanvasState();
+  } = useCanvasState(initialElements);
 
   const editSelectedElement = useCallback(() => {
     if (!selectedElement) return;

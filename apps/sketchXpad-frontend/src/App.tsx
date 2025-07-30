@@ -1,7 +1,7 @@
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import { HomePage } from "./pages/HomePage.tsx";
 import { AuthPage } from "./pages/authPage.tsx";
-import Canvas from "./canvas/[roomId]/page.tsx";
+import Canvas from "./components/canvas/[roomId]/page.tsx";
 
 function App() {
   return (

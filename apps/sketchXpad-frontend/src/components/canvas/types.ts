@@ -31,6 +31,7 @@ export interface DrawingCanvasProps {
     strokeWidth: number;
     backgroundColor: string;
     onToolChange?: (tool: Tool) => void;
+    initialElements?: DrawingElement[];
 }
 
 export interface CanvasState {
