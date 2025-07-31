@@ -57,7 +57,7 @@ export default function Canvas() {
     roomId: string
   ): Promise<DrawingElement[]> => {
     try {
-      const res = await axios.get(`${HTTP_URL}/chats/${roomId}`);
+      const res = await axios.get(`${HTTP_URL}/room/chats/${roomId}`);
       const messages = res.data.messages;
       const shapes: DrawingElement[] = messages.map(
         (x: { message: string }) => {

@@ -6,16 +6,45 @@ import { CreateUserSchema, LoginUserSchema, CreateRoomSchema } from "@repo/commo
 import { prisma } from "@repo/db/client";
 
 const app = express();
+
+// Add CORS middleware
+app.use((req, res, next) => {
+    res.header('Access-Control-Allow-Origin', '*');
+    res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+    res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization');
+
+    if (req.method === 'OPTIONS') {
+        res.sendStatus(200);
+    } else {
+        next();
+    }
+});
+
 app.use(express.json());
 
-app.post('/signup', async (req: Request, res: Response) => {
-    console.log('Request body:', req.body);
+// Add a health check endpoint
+app.get('/health', (req, res) => {
+    res.json({ status: 'ok', timestamp: new Date().toISOString() });
+});
+
+console.log('HTTP Backend starting...');
+console.log('JWT_SECRET:', JWT_SECRET ? 'Set' : 'Not set');
+console.log('Database URL:', process.env.DATABASE_URL ? 'Set' : 'Not set');
+
+
+// API auth routes (for AuthContext)
+app.post('/api/auth/signup', async (req: Request, res: Response) => {
+    console.log('API Auth Signup Request received:', req.body);
+
     const parsedData = CreateUserSchema.safeParse(req.body);
     if (!parsedData.success) {
-        return res.json({
+        console.log('Validation failed:', parsedData.error);
+        return res.status(400).json({
             message: "Invalid data"
         });
     }
+
+    console.log('Validation passed, attempting to create user...');
 
     try {
         const user = await prisma.user.create({
@@ -25,22 +54,33 @@ app.post('/signup', async (req: Request, res: Response) => {
                 name: parsedData.data.name!,
                 photo: ""
             }
-        })
+        });
+
+        console.log('User created successfully:', user.id);
+
+        const token = jwt.sign({ userId: user.id }, JWT_SECRET);
+
         res.json({
-            userId: user.id
+            token,
+            user: {
+                id: user.id,
+                username: user.name,
+                email: user.email
+            }
         });
 
     } catch (error) {
-        res.status(411).json({
-            message: "User already exists with this email"
-        })
+        console.error('Error creating user:', error);
+        res.status(409).json({
+            message: "User already exists with this email or database error"
+        });
     }
 });
 
-app.post('/signin', async (req: Request, res: Response) => {
+app.post('/api/auth/signin', async (req: Request, res: Response) => {
     const parsedData = LoginUserSchema.safeParse(req.body);
     if (!parsedData.success) {
-        return res.json({
+        return res.status(400).json({
             message: "Invalid data"
         });
     }
@@ -51,17 +91,60 @@ app.post('/signin', async (req: Request, res: Response) => {
                 email: parsedData.data.email!,
                 password: parsedData.data.password!,
             }
-        })
+        });
+
         if (!user) {
-            return res.json({ message: "User not found" });
+            return res.status(401).json({ message: "Invalid credentials" });
         }
+
         const token = jwt.sign({ userId: user.id }, JWT_SECRET);
-        res.json({ token });
+
+        res.json({
+            token,
+            user: {
+                id: user.id,
+                username: user.name,
+                email: user.email
+            }
+        });
 
     } catch (error) {
-        res.status(411).json({
+        res.status(500).json({
             message: "Error signing in"
-        })
+        });
+    }
+});
+
+app.get('/api/auth/me', middleware, async (req: Request, res: Response) => {
+    try {
+        const user = await prisma.user.findUnique({
+            where: {
+                id: req.userId!
+            },
+            select: {
+                id: true,
+                name: true,
+                email: true
+            }
+        });
+
+        if (!user) {
+            return res.status(404).json({
+                message: "User not found"
+            });
+        }
+
+        res.json({
+            user: {
+                id: user.id,
+                username: user.name,
+                email: user.email
+            }
+        });
+    } catch (error) {
+        res.status(500).json({
+            message: "Error fetching user data"
+        });
     }
 });
 

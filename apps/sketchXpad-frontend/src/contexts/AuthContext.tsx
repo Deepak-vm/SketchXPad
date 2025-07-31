@@ -18,7 +18,7 @@ interface AuthState {
 }
 
 interface AuthContextType extends AuthState {
-  login: (username: string, password: string) => Promise<void>;
+  login: (email: string, password: string) => Promise<void>;
   signup: (username: string, email: string, password: string) => Promise<void>;
   logout: () => void;
   clearError: () => void;
@@ -149,12 +149,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     checkAuthStatus();
   }, []);
 
-  const login = async (username: string, password: string) => {
+  const login = async (email: string, password: string) => {
     try {
       dispatch({ type: "AUTH_START" });
 
       const response = await axios.post(`${HTTP_URL}/api/auth/signin`, {
-        username,
+        email,
         password,
       });
 
@@ -178,7 +178,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       dispatch({ type: "AUTH_START" });
 
       const response = await axios.post(`${HTTP_URL}/api/auth/signup`, {
-        username,
+        name: username,
         email,
         password,
       });
