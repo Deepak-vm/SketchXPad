@@ -69,24 +69,6 @@ function SignIn() {
           />
         </div>
 
-        <div className="flex items-center justify-between">
-          <label className="flex items-center">
-            <input
-              type="checkbox"
-              className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-              disabled={isLoading}
-            />
-            <span className="ml-2 text-sm text-gray-600">Remember me</span>
-          </label>
-          <button
-            type="button"
-            className="text-sm text-blue-600 hover:text-blue-500 font-medium"
-            disabled={isLoading}
-          >
-            Forgot password?
-          </button>
-        </div>
-
         <button
           type="submit"
           disabled={isLoading}

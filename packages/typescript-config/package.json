@@ -9,9 +9,7 @@
   },
   "exports": {
     ".": "./base.json",
-    "./base.json": "./base.json",
-    "./nextjs.json": "./nextjs.json",
-    "./react-library.json": "./react-library.json"
+    "./base.json": "./base.json"
   },
   "files": [
     "*.json"
