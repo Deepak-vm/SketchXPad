@@ -65,6 +65,35 @@ app.post('/signin', async (req: Request, res: Response) => {
     }
 });
 
+app.get('/me', middleware, async (req: Request, res: Response) => {
+    try {
+        const user = await prisma.user.findUnique({
+            where: {
+                id: req.userId!
+            },
+            select: {
+                id: true,
+                name: true,
+                email: true
+            }
+        });
+
+        if (!user) {
+            return res.status(404).json({
+                message: "User not found"
+            });
+        }
+
+        res.json({
+            user
+        });
+    } catch (error) {
+        res.status(500).json({
+            message: "Error fetching user data"
+        });
+    }
+});
+
 app.post('/room', middleware, async (req: Request, res: Response) => {
     const parsedData = CreateRoomSchema.safeParse(req.body);
     if (!parsedData.success) {

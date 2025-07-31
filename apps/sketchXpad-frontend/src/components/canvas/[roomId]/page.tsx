@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useParams } from "react-router-dom";
 import DrawingCanvas, { type Tool } from "../../DrawingCanvas";
 import { Toolbar } from "../../Toolbar";
@@ -6,6 +6,7 @@ import { Header } from "../../Header";
 import type { DrawingElement } from "../types";
 import axios from "axios";
 import { HTTP_URL } from "../../../.config";
+import { useDrawingSocket } from "../../../hooks/useDrawingSocket";
 
 export default function Canvas() {
   const { roomId } = useParams<{ roomId: string }>();
@@ -18,6 +19,25 @@ export default function Canvas() {
   const [backgroundColor, setBackgroundColor] = useState("#FFFFFF");
   const [existingShapes, setExistingShapes] = useState<DrawingElement[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+
+  // WebSocket for real-time collaboration
+  const {
+    socket,
+    connected,
+    participantCount,
+    broadcastShape,
+    broadcastClear,
+  } = useDrawingSocket(roomId || "");
+
+  // Debug participant count changes
+  useEffect(() => {
+    console.log(
+      "Participant count changed:",
+      participantCount,
+      "Connected:",
+      connected
+    );
+  }, [participantCount, connected]);
 
   const handleShare = () => {
     if (navigator.share) {
@@ -96,6 +116,90 @@ export default function Canvas() {
     loadShapes();
   }, [roomId]);
 
+  // Store remote handlers so we can call them from the unified message handler
+  const [remoteChangeHandler, setRemoteChangeHandler] = useState<
+    | ((shape: DrawingElement, action: "draw" | "update" | "delete") => void)
+    | null
+  >(null);
+  const [remoteClearHandler, setRemoteClearHandler] = useState<
+    (() => void) | null
+  >(null);
+
+  // Unified WebSocket message handling
+  useEffect(() => {
+    if (!socket) return;
+
+    const handleMessage = (event: MessageEvent) => {
+      try {
+        const data = JSON.parse(event.data);
+        console.log("Received WebSocket message:", data);
+
+        if (data.type === "shape" && data.roomId === roomId) {
+          console.log("Processing shape update:", data.action, data.shape.id);
+          if (remoteChangeHandler) {
+            console.log(
+              "Calling remoteChangeHandler with:",
+              data.shape,
+              data.action
+            );
+            remoteChangeHandler(data.shape, data.action);
+          } else {
+            console.log("No remoteChangeHandler available yet");
+          }
+        } else if (data.type === "clear" && data.roomId === roomId) {
+          console.log("Processing clear command");
+          if (remoteClearHandler) {
+            remoteClearHandler();
+          } else {
+            console.log("No remoteClearHandler available yet");
+          }
+        }
+      } catch (error) {
+        console.error("Error parsing WebSocket message:", error);
+      }
+    };
+
+    socket.addEventListener("message", handleMessage);
+    return () => socket.removeEventListener("message", handleMessage);
+  }, [socket, roomId, remoteChangeHandler, remoteClearHandler]);
+
+  // Callback functions for broadcasting changes
+  const handleShapeChange = useCallback(
+    (shape: DrawingElement, action: "draw" | "update" | "delete") => {
+      console.log("Broadcasting shape change:", action, shape.id);
+      broadcastShape(shape, action);
+    },
+    [broadcastShape]
+  );
+
+  const handleClear = useCallback(() => {
+    console.log("Broadcasting clear");
+    broadcastClear();
+  }, [broadcastClear]);
+
+  // Callback to set up remote change handling - now just stores the handler
+  const setupRemoteChangeHandler = useCallback(
+    (
+      applyRemoteChange: (
+        shape: DrawingElement,
+        action: "draw" | "update" | "delete"
+      ) => void
+    ) => {
+      console.log("Setting up remote change handler");
+      setRemoteChangeHandler(() => applyRemoteChange);
+    },
+    []
+  );
+
+  // Callback to set up remote clear handling - now just stores the handler
+  const setupRemoteClearHandler = useCallback(
+    (applyRemoteClear: () => void) => {
+      console.log("Setting up remote clear handler");
+      setRemoteClearHandler(() => applyRemoteClear);
+    },
+    []
+  );
+
   const handleExport = () => {
     // TODO: Implement export functionality
     alert("Export functionality coming soon!");
@@ -117,10 +221,18 @@ export default function Canvas() {
       {/* Header */}
       <Header
         roomId={roomId || "unknown"}
-        participants={1}
+        participants={participantCount || 1}
+        connected={connected}
         onShare={handleShare}
         onExport={handleExport}
       />
+
+      {/* Connection status */}
+      {!connected && (
+        <div className="bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-2 text-sm">
+          <p>⚠️ Not connected to real-time collaboration. Reconnecting...</p>
+        </div>
+      )}
 
       {/* Main content */}
       <div className="flex-1 flex overflow-hidden">
@@ -147,6 +259,10 @@ export default function Canvas() {
             backgroundColor={backgroundColor}
             onToolChange={setSelectedTool}
             initialElements={existingShapes}
+            onShapeChange={handleShapeChange}
+            onClear={handleClear}
+            onRemoteChange={setupRemoteChangeHandler}
+            onRemoteClear={setupRemoteClearHandler}
           />
         </div>
       </div>

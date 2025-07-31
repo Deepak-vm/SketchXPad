@@ -1,7 +1,11 @@
 import { useState, useCallback, useEffect } from 'react';
 import type { DrawingElement, Point } from './types';
 
-export const useCanvasState = (initialElements: DrawingElement[] = []) => {
+export const useCanvasState = (
+    initialElements: DrawingElement[] = [],
+    onShapeChange?: (shape: DrawingElement, action: 'draw' | 'update' | 'delete') => void,
+    onClear?: () => void
+) => {
     const [isDrawing, setIsDrawing] = useState(false);
     const [elements, setElements] = useState<DrawingElement[]>(initialElements);
     const [history, setHistory] = useState<DrawingElement[][]>([initialElements]);
@@ -33,12 +37,23 @@ export const useCanvasState = (initialElements: DrawingElement[] = []) => {
         setHistoryIndex(newHistory.length - 1);
     }, [history, historyIndex]);
 
+    // Enhanced setElements to broadcast changes
+    const setElementsWithBroadcast = useCallback((newElements: DrawingElement[], broadcastAction?: { shape: DrawingElement, action: 'draw' | 'update' | 'delete' }) => {
+        setElements(newElements);
+        if (broadcastAction && onShapeChange) {
+            onShapeChange(broadcastAction.shape, broadcastAction.action);
+        }
+    }, [onShapeChange]);
+
     const clearCanvas = useCallback(() => {
         setElements([]);
         setCurrentElement(null);
         setSelectedElement(null);
         addToHistory([]);
-    }, [addToHistory]);
+        if (onClear) {
+            onClear();
+        }
+    }, [addToHistory, onClear]);
 
     const undoLastAction = useCallback(() => {
         if (historyIndex > 0) {
@@ -61,13 +76,74 @@ export const useCanvasState = (initialElements: DrawingElement[] = []) => {
     const deleteSelectedElement = useCallback(() => {
         if (!selectedElement) return;
 
+        const elementToDelete = elements.find(el => el.id === selectedElement);
         const newElements = elements.filter(
             (element) => element.id !== selectedElement
         );
         setElements(newElements);
         setSelectedElement(null);
         addToHistory(newElements);
-    }, [selectedElement, elements, addToHistory]);
+
+        // Broadcast deletion
+        if (elementToDelete && onShapeChange) {
+            onShapeChange(elementToDelete, 'delete');
+        }
+    }, [selectedElement, elements, addToHistory, onShapeChange]);
+
+    // Function to add element and broadcast
+    const addElementWithBroadcast = useCallback((element: DrawingElement) => {
+        const newElements = [...elements, element];
+        setElements(newElements);
+        addToHistory(newElements);
+        if (onShapeChange) {
+            onShapeChange(element, 'draw');
+        }
+    }, [elements, addToHistory, onShapeChange]);
+
+    // Function to update element and broadcast
+    const updateElementWithBroadcast = useCallback((elementId: string, updates: Partial<DrawingElement>) => {
+        const newElements = elements.map(el =>
+            el.id === elementId ? { ...el, ...updates } : el
+        );
+        const updatedElement = newElements.find(el => el.id === elementId);
+        setElements(newElements);
+        addToHistory(newElements);
+        if (updatedElement && onShapeChange) {
+            onShapeChange(updatedElement, 'update');
+        }
+    }, [elements, addToHistory, onShapeChange]);
+
+    // Function to receive remote changes (from other users)
+    const applyRemoteChange = useCallback((shape: DrawingElement, action: 'draw' | 'update' | 'delete') => {
+        setElements(prevElements => {
+            let newElements = [...prevElements];
+
+            switch (action) {
+                case 'draw':
+                    // Only add if not already exists
+                    if (!newElements.find(el => el.id === shape.id)) {
+                        newElements.push(shape);
+                    }
+                    break;
+                case 'update':
+                    newElements = newElements.map(el =>
+                        el.id === shape.id ? shape : el
+                    );
+                    break;
+                case 'delete':
+                    newElements = newElements.filter(el => el.id !== shape.id);
+                    break;
+            }
+
+            return newElements;
+        });
+    }, []);
+
+    const applyRemoteClear = useCallback(() => {
+        setElements([]);
+        setCurrentElement(null);
+        setSelectedElement(null);
+    }, []);
 
     return {
         // State
@@ -88,7 +164,7 @@ export const useCanvasState = (initialElements: DrawingElement[] = []) => {
 
         // Setters
         setIsDrawing,
-        setElements,
+        setElements: setElementsWithBroadcast,
         setCurrentElement,
         setStartPoint,
         setIsTyping,
@@ -106,5 +182,11 @@ export const useCanvasState = (initialElements: DrawingElement[] = []) => {
         undoLastAction,
         redoLastAction,
         deleteSelectedElement,
+
+        // Broadcasting functions
+        addElementWithBroadcast,
+        updateElementWithBroadcast,
+        applyRemoteChange,
+        applyRemoteClear,
     };
 };

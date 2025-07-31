@@ -20,6 +20,21 @@ import {
 } from "./canvas/keyboardHandlers";
 import { useCanvasState } from "./canvas/useCanvasState";
 
+interface DrawingCanvasPropsWithSocket extends DrawingCanvasProps {
+  onShapeChange?: (
+    shape: DrawingElement,
+    action: "draw" | "update" | "delete"
+  ) => void;
+  onClear?: () => void;
+  onRemoteChange?: (
+    callback: (
+      shape: DrawingElement,
+      action: "draw" | "update" | "delete"
+    ) => void
+  ) => void;
+  onRemoteClear?: (callback: () => void) => void;
+}
+
 export default function DrawingCanvas({
   selectedTool,
   strokeColor,
@@ -27,10 +42,14 @@ export default function DrawingCanvas({
   backgroundColor,
   onToolChange,
   initialElements = [],
-}: DrawingCanvasProps) {
+  onShapeChange,
+  onClear,
+  onRemoteChange,
+  onRemoteClear,
+}: DrawingCanvasPropsWithSocket) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
-  // Use custom hook for state management
+  // Use custom hook for state management with broadcasting
   const {
     isDrawing,
     elements,
@@ -63,7 +82,21 @@ export default function DrawingCanvas({
     undoLastAction,
     redoLastAction,
     deleteSelectedElement,
-  } = useCanvasState(initialElements);
+    addElementWithBroadcast,
+    updateElementWithBroadcast,
+    applyRemoteChange,
+    applyRemoteClear,
+  } = useCanvasState(initialElements, onShapeChange, onClear);
+
+  // Set up remote change listeners
+  useEffect(() => {
+    if (onRemoteChange) {
+      onRemoteChange(applyRemoteChange);
+    }
+    if (onRemoteClear) {
+      onRemoteClear(applyRemoteClear);
+    }
+  }, [onRemoteChange, onRemoteClear, applyRemoteChange, applyRemoteClear]);
 
   const editSelectedElement = useCallback(() => {
     if (!selectedElement) return;
@@ -109,11 +142,9 @@ export default function DrawingCanvas({
         text: text,
       };
 
-      const newElements = [...elements, newElement];
-      setElements(newElements);
-      addToHistory(newElements);
+      addElementWithBroadcast(newElement);
     },
-    [elements, strokeColor, strokeWidth, setElements, addToHistory]
+    [strokeColor, strokeWidth, addElementWithBroadcast]
   );
 
   const redrawCanvas = useCallback(() => {
@@ -373,24 +404,20 @@ export default function DrawingCanvas({
       const newX = currentPoint.x - dragOffset.x;
       const newY = currentPoint.y - dragOffset.y;
 
-      // Update the selected element's position
-      setElements((prevElements) =>
-        prevElements.map((element) => {
-          if (element.id === selectedElement) {
-            const deltaX = newX - element.points[0].x;
-            const deltaY = newY - element.points[0].y;
+      // Calculate the delta for the move
+      const currentElement = elements.find((el) => el.id === selectedElement);
+      if (currentElement) {
+        const deltaX = newX - currentElement.points[0].x;
+        const deltaY = newY - currentElement.points[0].y;
 
-            return {
-              ...element,
-              points: element.points.map((p) => ({
-                x: p.x + deltaX,
-                y: p.y + deltaY,
-              })),
-            };
-          }
-          return element;
-        })
-      );
+        // Update element with new position using the broadcast function
+        const newPoints = currentElement.points.map((p) => ({
+          x: p.x + deltaX,
+          y: p.y + deltaY,
+        }));
+
+        updateElementWithBroadcast(selectedElement, { points: newPoints });
+      }
       return;
     }
 
@@ -444,12 +471,10 @@ export default function DrawingCanvas({
     if (!isDrawing || !currentElement) return;
 
     setIsDrawing(false);
-    const newElements = [...elements, currentElement];
-    setElements(newElements);
-    setCurrentElement(null);
 
-    // Add to history for undo/redo
-    addToHistory(newElements);
+    // Add the current element to elements and broadcast
+    addElementWithBroadcast(currentElement);
+    setCurrentElement(null);
   };
 
   return (

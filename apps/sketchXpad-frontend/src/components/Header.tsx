@@ -5,6 +5,7 @@ import banner from "../assets/banner.svg";
 interface HeaderProps {
   roomId: string;
   participants?: number;
+  connected?: boolean;
   onShare?: () => void;
   onExport?: () => void;
 }
@@ -12,6 +13,7 @@ interface HeaderProps {
 export const Header: React.FC<HeaderProps> = ({
   roomId,
   participants = 1,
+  connected = false,
   onShare,
   onExport,
 }) => {
@@ -38,9 +40,13 @@ export const Header: React.FC<HeaderProps> = ({
       <div className="flex items-center gap-4">
         {/* Participants count */}
         <div className="flex items-center gap-2">
-          <div className="w-2 h-2 bg-green-400 rounded-full"></div>
+          <div
+            className={`w-2 h-2 rounded-full ${connected && participants > 0 ? "bg-green-400" : "bg-gray-400"}`}
+          ></div>
           <span className="text-sm text-gray-600">
-            {participants} participant{participants !== 1 ? "s" : ""}
+            {connected
+              ? `${participants} participant${participants !== 1 ? "s" : ""} online`
+              : "Connecting..."}
           </span>
         </div>
 

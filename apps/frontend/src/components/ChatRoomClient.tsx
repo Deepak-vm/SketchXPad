@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "../contexts/AuthContext";
 import { useSocket } from "../hooks/useSocket";
 
 export function ChatRoomClient({
@@ -13,9 +14,16 @@ export function ChatRoomClient({
 }) {
   const [chats, setChats] = useState(messages);
   const [currentMessage, setCurrentMessage] = useState("");
-  const [userName] = useState(localStorage.getItem("userName") || "Anonymous");
+  const { user, isAuthenticated } = useAuth();
   const { socket, loading } = useSocket();
   const navigate = useNavigate();
+
+  // Redirect to home if not authenticated
+  useEffect(() => {
+    if (!isAuthenticated) {
+      navigate("/");
+    }
+  }, [isAuthenticated, navigate]);
 
   useEffect(() => {
     if (socket && !loading) {
@@ -43,7 +51,7 @@ export function ChatRoomClient({
           <div>
             <h1 className="text-xl font-semibold">Room: {id}</h1>
             <p className="text-blue-100 text-sm">
-              Welcome, {userName} •
+              Welcome, {user?.name} •
               {loading ? (
                 <span className="text-yellow-200"> Connecting...</span>
               ) : (
@@ -95,7 +103,7 @@ export function ChatRoomClient({
                       type: "chat",
                       roomId: id,
                       message: currentMessage,
-                      userName: userName,
+                      userName: user?.name,
                     })
                   );
                   setCurrentMessage("");
@@ -116,7 +124,7 @@ export function ChatRoomClient({
                     type: "chat",
                     roomId: id,
                     message: currentMessage,
-                    userName: userName,
+                    userName: user?.name,
                   })
                 );
                 setCurrentMessage("");
