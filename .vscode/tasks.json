@@ -8,6 +8,13 @@
 			"group": "build",
 			"isBackground": true,
 			"problemMatcher": []
+		},
+		{
+			"label": "Start Development Environment",
+			"type": "shell",
+			"command": "pnpm run dev",
+			"isBackground": true,
+			"group": "build"
 		}
 	]
 }

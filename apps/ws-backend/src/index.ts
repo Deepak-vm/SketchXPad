@@ -1,7 +1,8 @@
 import { WebSocketServer } from 'ws';
 import jwt from 'jsonwebtoken';
 
-const wss = new WebSocketServer({ port: 8080 });
+const PORT = Number(process.env.PORT) || 8080;
+const wss = new WebSocketServer({ port: PORT });
 
 interface User {
     userId: string;
@@ -309,5 +310,5 @@ wss.on('connection', function connection(ws, req) {
     });
 });
 
-console.log("WebSocket server is running on port 8080");
+console.log(`WebSocket server is running on port ${PORT}`);
 
