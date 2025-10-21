@@ -220,6 +220,186 @@ The application uses the following main entities:
 - **Room**: Drawing rooms with admin management
 - **Chat**: Chat messages within rooms
 
+## 🚀 Deployment
+
+### Production Deployment
+
+This project is currently deployed and live:
+
+- **Frontend**: Deploy to [Vercel](https://vercel.com) (recommended)
+- **Backend**: Deployed on AWS EC2 Free Tier
+- **Database**: Neon PostgreSQL (Serverless)
+
+### Backend Deployment (AWS EC2)
+
+📖 **[Complete EC2 Deployment Guide →](DEPLOY_EC2.md)**
+
+Step-by-step guide to deploy your SketchXPad backends on AWS EC2 Free Tier, including:
+- EC2 instance setup and configuration
+- Installing Node.js, pnpm, and PM2
+- Building and deploying both backends
+- Process management and auto-restart
+- Security group configuration
+- Optional Nginx reverse proxy and HTTPS setup
+
+**Quick Summary:**
+1. Launch EC2 t2.micro instance (Ubuntu 22.04)
+2. Install dependencies (Node.js 20, pnpm, PM2)
+3. Clone repository and install packages
+4. Configure environment variables
+5. Build all packages with `pnpm run build`
+6. Start servers with PM2
+7. Configure security groups for ports 3000, 8080
+
+### Frontend Deployment (Vercel)
+
+#### Option 1: Deploy via Vercel Dashboard (Recommended)
+
+1. Go to [Vercel](https://vercel.com) and sign in with GitHub
+2. Click **"Add New Project"**
+3. Import your repository: `Deepak-vm/SketchXPad`
+4. Configure project settings:
+   - **Framework Preset**: Vite
+   - **Root Directory**: `apps/sketchXpad-frontend`
+   - **Build Command**: `pnpm run build`
+   - **Output Directory**: `dist`
+   - **Install Command**: `pnpm install`
+5. Click **"Deploy"**
+
+#### Option 2: Deploy via Vercel CLI
+
+```bash
+# Install Vercel CLI
+npm install -g vercel
+
+# Navigate to frontend
+cd apps/sketchXpad-frontend
+
+# Login and deploy
+vercel login
+vercel
+
+# Deploy to production
+vercel --prod
+```
+
+### Frontend Configuration for Production
+
+Update `apps/sketchXpad-frontend/src/.config.ts` with your deployed backend URLs:
+
+```typescript
+// Production configuration
+export const HTTP_URL = 'http://your-ec2-ip:3000';
+export const WS_URL = 'ws://your-ec2-ip:8080';
+
+// Or with custom domain
+export const HTTP_URL = 'https://api.your-domain.com';
+export const WS_URL = 'wss://ws.your-domain.com';
+```
+
+### Environment Variables
+
+Ensure these are set in your deployment environments:
+
+**Backend (EC2):**
+- `DATABASE_URL` - PostgreSQL connection string
+- `JWT_SECRET` - Secret key for JWT token generation
+- `PORT` - Server port (3000 for HTTP, 8080 for WebSocket)
+
+**Frontend (Vercel):**
+- `VITE_HTTP_URL` - HTTP backend URL (optional, can use .config.ts)
+- `VITE_WS_URL` - WebSocket backend URL (optional, can use .config.ts)
+
+### Post-Deployment Checklist
+
+- [ ] Backend health check accessible: `http://your-ec2-ip:3000/health`
+- [ ] WebSocket server responding: `ws://your-ec2-ip:8080`
+- [ ] Database migrations deployed
+- [ ] PM2 processes running and saved
+- [ ] PM2 startup configured for auto-restart
+- [ ] EC2 Security Groups configured (ports 22, 80, 443, 3000, 8080)
+- [ ] Frontend deployed to Vercel
+- [ ] Frontend connected to backend successfully
+- [ ] CORS configured properly on backend
+- [ ] SSL/HTTPS configured (optional, via Cloudflare or Nginx)
+
+### Monitoring & Maintenance
+
+**Backend (EC2):**
+```bash
+# Check PM2 status
+pm2 list
+
+# View logs
+pm2 logs
+
+# Restart services
+pm2 restart all
+
+# Monitor resources
+pm2 monit
+```
+
+**Database:**
+```bash
+# Check database connection
+cd packages/db
+pnpm prisma studio
+```
+
+### Updating Your Deployment
+
+When you push changes to GitHub:
+
+```bash
+# On EC2 (Backend)
+cd ~/SketchXPad
+git pull origin main
+pnpm install
+pnpm run build
+pm2 restart all
+
+# On Vercel (Frontend)
+# Automatic deployment on git push (if configured)
+# Or manually: vercel --prod
+```
+
+## 🔒 Security Considerations
+
+- Always use environment variables for secrets
+- Enable HTTPS for production (use Cloudflare or Let's Encrypt)
+- Configure CORS properly (don't use `*` in production)
+- Use strong JWT secrets
+- Keep dependencies updated
+- Regular security audits with `pnpm audit`
+- Use PM2 for process management and monitoring
+- Configure proper firewall rules on EC2
+
+## 📊 Performance Tips
+
+- Enable gzip compression on Nginx
+- Use PM2 cluster mode for load balancing
+- Optimize WebSocket connections
+- Implement rate limiting
+- Use CDN for static assets (Vercel provides this)
+- Monitor and optimize database queries
+- Use connection pooling for database
+
+---
+
+## 🤝 Contributing
+
+Contributions are welcome! Please feel free to submit a Pull Request.
+
+## 📝 License
+
+This project is open source and available under the [MIT License](LICENSE).
+
+## 📧 Contact
+
+- GitHub: [@Deepak-vm](https://github.com/Deepak-vm)
+- Repository: [SketchXPad](https://github.com/Deepak-vm/SketchXPad)
+
 ---
 
 **Happy Drawing! 🎨✨**
