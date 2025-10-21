@@ -2,7 +2,8 @@
     "extends": "../../packages/typescript-config/base.json",
     "compilerOptions": {
         "rootDir": "./src",
-        "outDir": "./dist"
+        "outDir": "./dist",
+        "moduleResolution": "bundler"
     },
     "include": [
         "src/**/*"

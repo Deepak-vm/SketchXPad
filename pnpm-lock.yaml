@@ -180,6 +180,9 @@ importers:
       '@repo/typescript-config':
         specifier: workspace:*
         version: link:../typescript-config
+      typescript:
+        specifier: ^5.6.3
+        version: 5.8.3
 
   packages/db:
     dependencies:
@@ -192,6 +195,10 @@ importers:
       prisma:
         specifier: ^6.12.0
         version: 6.12.0(typescript@5.8.3)
+    devDependencies:
+      typescript:
+        specifier: ^5.6.3
+        version: 5.8.3
 
   packages/eslint-config:
     devDependencies:
