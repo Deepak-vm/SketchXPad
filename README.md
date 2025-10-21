@@ -63,7 +63,7 @@ SketchXPad/
 
 - Node.js 18+
 - pnpm (recommended) or npm
-- PostgreSQL database (we recommend [Neon](https://neon.tech/))
+- PostgreSQL database (recommended [Neon](https://neon.tech/))
 
 ### Installation
 
