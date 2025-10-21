@@ -2,7 +2,10 @@ import { WebSocketServer } from 'ws';
 import jwt from 'jsonwebtoken';
 
 const PORT = Number(process.env.PORT) || 8080;
-const wss = new WebSocketServer({ port: PORT });
+const wss = new WebSocketServer({ 
+    port: PORT,
+    host: '0.0.0.0'
+});
 
 interface User {
     userId: string;
