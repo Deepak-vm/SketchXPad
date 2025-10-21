@@ -220,5 +220,28 @@ The application uses the following main entities:
 - **Room**: Drawing rooms with admin management
 - **Chat**: Chat messages within rooms
 
+## 🚀 Deployment
+
+### Deploy Backends to AWS EC2 (Free Tier)
+
+📖 **[Complete EC2 Deployment Guide →](DEPLOY_EC2.md)**
+
+Step-by-step guide to deploy your SketchXPad backends on AWS EC2 Free Tier, including:
+- EC2 instance setup and configuration
+- Installing Node.js, pnpm, and PM2
+- Building and deploying both backends
+- Process management and auto-restart
+- Optional Nginx reverse proxy and HTTPS setup
+
+### Deploy Frontend
+
+Deploy your frontend to:
+- **Vercel** (Recommended) - https://vercel.com
+- **Netlify** - https://netlify.com
+- **AWS S3 + CloudFront**
+
+Update backend URLs in `apps/sketchXpad-frontend/src/.config.ts` to point to your deployed EC2 instance.
+
+---
 
 **Happy Drawing! 🎨✨**

@@ -36,3 +36,9 @@ yarn-error.log*
 # Misc
 .DS_Store
 *.pem
+
+# Development logs
+dev.log
+
+# PM2 ecosystem config (local paths)
+ecosystem.config.js
