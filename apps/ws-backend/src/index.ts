@@ -1,10 +1,31 @@
 import { WebSocketServer } from 'ws';
+import { createServer as createHttpServer } from 'http';
 import jwt from 'jsonwebtoken';
 
 const PORT = Number(process.env.PORT) || 8080;
-const wss = new WebSocketServer({
-    port: PORT,
-    host: '0.0.0.0'
+const httpServer = createHttpServer();
+
+httpServer.on('error', (err: any) => {
+    console.error('HTTP server error:', err);
+    if (err && err.code === 'EADDRINUSE') {
+        console.error(`Port ${PORT} already in use.`);
+    }
+});
+httpServer.listen(PORT, '0.0.0.0', () => {
+    console.log(`WebSocket server is running on port ${PORT}`);
+});
+process.on('SIGINT', () => {
+    console.log('Shutting down ws-backend');
+    try { wss.close(); } catch {}
+    try { httpServer.close(); } catch {}
+    process.exit(0);
+});
+process.on('SIGTERM', () => process.emit('SIGINT'));
+
+
+const wss = new WebSocketServer({ server: httpServer });
+wss.on('error', (err) => {
+    console.error('WebSocketServer error:', err);
 });
 
 interface User {
