@@ -1,31 +1,25 @@
-FROM node:20-alpine AS base
+FROM node:20-alpine
 WORKDIR /app
-RUN npm install -g pnpm turbo
 
+RUN npm install -g pnpm
 
-FROM base AS pruner
-COPY . .
-RUN turbo prune --scope=http-backend --docker
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+COPY turbo.json ./
 
-FROM base AS installer
-COPY --from=pruner /app/out/json/ .
-COPY --from=pruner /app/out/pnpm-lock.yaml ./pnpm-lock.yaml
+COPY packages ./packages
+
+COPY apps/http-backend ./apps/http-backend
+
 RUN pnpm install --frozen-lockfile
 
-FROM base AS builder
-COPY --from=installer /app .
-COPY --from=pruner /app/out/full/ .
-RUN cd packages/db && pnpm prisma generate
-RUN turbo run build --filter=http-backend...
+RUN cd packages/db && npx prisma generate
 
-FROM node:20-alpine AS runtime
-WORKDIR /app
-RUN npm install -g pnpm
-COPY --from=builder /app/node_modules ./node_modules
-COPY --from=builder /app/apps/http-backend/dist ./dist
-COPY --from=builder /app/apps/http-backend/package.json .
-COPY --from=builder /app/packages/db/prisma ./prisma
+RUN cd apps/http-backend && pnpm build
+
 ENV NODE_ENV=production
 EXPOSE 3000
+
+WORKDIR /app/apps/http-backend
 CMD ["node", "dist/index.js"]
+
 
