@@ -85,3 +85,4 @@ prisma/.env
 package-lock.json
 yarn.lock
 
+infrastructure/k8s/secrets.yaml
