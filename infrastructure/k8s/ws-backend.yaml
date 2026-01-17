@@ -1,0 +1,44 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: ws-backend
+  name: ws-backend
+  namespace: sketchxpad
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: ws-backend
+  template:
+    metadata:
+      labels:
+        app: ws-backend
+    spec:
+      containers:
+        - image: sketchxpad-ws-backend:latest
+          name: ws-backend
+          imagePullPolicy: Never
+          ports:
+            - containerPort: 8080
+          env:
+            - name: PORT
+              value: "8080"
+            - name: NODE_ENV
+              value: "production"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: ws-backend
+  name: ws-backend
+  namespace: sketchxpad
+spec:
+  ports:
+  - port: 8080
+    protocol: TCP
+    targetPort: 8080
+  selector:
+    app: ws-backend
+  type: ClusterIP

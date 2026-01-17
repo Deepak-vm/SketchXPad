@@ -1,4 +1,3 @@
-# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
 
 # Dependencies
 node_modules
@@ -86,3 +85,4 @@ prisma/.env
 package-lock.json
 yarn.lock
 
+infrastructure/k8s/secrets.yaml

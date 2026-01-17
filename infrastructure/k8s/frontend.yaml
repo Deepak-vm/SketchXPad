@@ -1,0 +1,46 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: frontend
+  name: frontend
+  namespace: sketchxpad
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: frontend
+  strategy: {}
+  template:
+    metadata:
+      labels:
+        app: frontend
+    spec:
+      containers:
+        - image: sketchxpad-frontend:latest
+          imagePullPolicy: Never
+          name: frontend
+          ports:
+            - containerPort: 80
+          env:
+            - name: VITE_HTTP_URL
+              value: "http://sketchxpad.local/api"
+            - name: VITE_WS_URL
+              value: "ws://sketchxpad.local/ws"
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: frontend
+  name: frontend
+  namespace: sketchxpad
+spec:
+  ports:
+    - port: 80
+      protocol: TCP
+      targetPort: 80
+  selector:
+    app: frontend
+  type: ClusterIP

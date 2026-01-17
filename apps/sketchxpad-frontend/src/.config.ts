@@ -1,2 +1,2 @@
-export const HTTP_URL = 'https://sketchxpad-http-backend.onrender.com';
-export const WS_URL = 'wss://sketchxpad-ws-backend.onrender.com';
+export const HTTP_URL = import.meta.env.VITE_HTTP_URL || 'https://sketchxpad-http-backend.onrender.com';
+export const WS_URL = import.meta.env.VITE_WS_URL || 'wss://sketchxpad-ws-backend.onrender.com';
