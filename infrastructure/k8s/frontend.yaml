@@ -17,11 +17,16 @@ spec:
         app: frontend
     spec:
       containers:
-      - image: sketchxpad-frontend:latest
-        imagePullPolicy: Never
-        name: frontend
-        ports:
-        - containerPort: 80
+        - image: sketchxpad-frontend:latest
+          imagePullPolicy: Never
+          name: frontend
+          ports:
+            - containerPort: 80
+          env:
+            - name: VITE_HTTP_URL
+              value: "http://sketchxpad.local/api"
+            - name: VITE_WS_URL
+              value: "ws://sketchxpad.local/ws"
 
 ---
 apiVersion: v1
@@ -33,10 +38,9 @@ metadata:
   namespace: sketchxpad
 spec:
   ports:
-  - port: 80
-    protocol: TCP
-    targetPort: 80
+    - port: 80
+      protocol: TCP
+      targetPort: 80
   selector:
     app: frontend
   type: ClusterIP
-
